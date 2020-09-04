@@ -1,0 +1,8 @@
+Debug/
+FirstProgram.vcxproj
+FirstProgram.vcxproj.filters
+FirstProgram.vcxproj.user
+backup/
+res/headers/stb_image.h
+src/glad.cpp
+src/stb_image.cpp
