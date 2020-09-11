@@ -8,6 +8,7 @@
 #include <iostream>
 #include <math.h>
 #include "../res/headers/shader.h"
+#include "../res/headers/camera.h"
 #include "../res/headers/stb_image.h"
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
@@ -17,22 +18,14 @@ void mouse_callback(GLFWwindow* window, double xpos, double ypos);
 const unsigned int SCR_WIDTH = 800;
 const unsigned int SCR_HEIGHT = 600;
 
-glm::vec3 camera_pos = glm::vec3(0.0f, 0.0f, 3.0f);
-glm::vec3 camera_front = glm::vec3(0.0f, 0.0f, -1.0f);
-glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f);
-
-glm::mat4 view = glm::mat4(1.0f);
-float camera_speed = 0.05;
-
 float delta_frametime = 0.0f;
 float prev_frametime = 0.0f;
 float curr_frametime = 0.0f;
 
-float pitch = 0.0f, yaw = -90.0f;
-glm::vec3 camera_dir;
+float prev_xpos = 0 , prev_ypos = 0;
+bool first_enter = true;
 
-double prev_xpos = SCR_WIDTH / 2, prev_ypos = SCR_HEIGHT / 2;
-
+Camera camera(glm::vec3(0.0f, 0.0f, 3.0f), glm::vec3(0.0f, 0.0f, -1.0f));
 
 int main()
 {
@@ -60,8 +53,6 @@ int main()
     
     // changing color of screen
     glClearColor(0.0f, 0.1f, 0.0f, 1.0f);
-    //glClear(GL_COLOR_BUFFER_BIT);
-    
     
     // loading vertices
     
@@ -157,12 +148,12 @@ int main()
 
     glEnable(GL_DEPTH_TEST);
 
+    glm::mat4 view = glm::mat4(1.0f);
     glm::mat4 model = glm::mat4(1.0f);
     glm::mat4 projection;
     
     model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f));
     projection = glm::perspective(glm::radians(45.0f), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
-    
     
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
@@ -181,11 +172,7 @@ int main()
         
         myShader.use();
 
-        camera_dir.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
-        camera_dir.y = sin(glm::radians(pitch));
-        camera_dir.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
-
-        view = glm::lookAt(camera_pos, camera_pos + camera_dir, up);
+        view = camera.GetViewMatrix();
 
         myShader.setMat4("model", model);
         myShader.setMat4("view", view);
@@ -210,42 +197,43 @@ int main()
 // listen for mouse movments for changing camera diraction
 void mouse_callback(GLFWwindow* window, double xpos, double ypos) 
 {
-    double delta_xpos, delta_ypos;
+    if (first_enter)
+    {
+        prev_xpos = xpos;
+        prev_ypos = ypos;
+        first_enter = false;
+    }
 
-    //std::cout << xpos  << ", " << ypos  << std::endl;
-
-    delta_xpos = xpos - prev_xpos;
-    delta_ypos = prev_ypos - ypos;
+    float delta_xpos = xpos - prev_xpos;
+    float delta_ypos = prev_ypos - ypos;
     prev_xpos = xpos;
     prev_ypos = ypos;
 
-    yaw += delta_xpos * 0.1;
-    pitch += delta_ypos * 0.1;
+    camera.UpdateDir(delta_xpos, delta_ypos);
 }
 
 // listen for (ESC) key for exit and (WASD) keys for changing camera position
 void processInput(GLFWwindow* window)
 {
-    camera_speed = delta_frametime * 5.0f;
+    float multiplier = 5.0f;
     if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
-        camera_speed /= 3;
+        multiplier /= 5;
 
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
         glfwSetWindowShouldClose(window, true);
 
     // use WASD to change camera position
-
-    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
-        camera_pos += camera_dir * camera_speed;
+    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) 
+        camera.UpdatePos(FORWARD, delta_frametime, multiplier);
 
     if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
-        camera_pos -= camera_dir * camera_speed;
+        camera.UpdatePos(BACKWARD, delta_frametime, multiplier);
 
     if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
-        camera_pos += glm::normalize(glm::cross(up, camera_dir)) * camera_speed;
+        camera.UpdatePos(LEFT, delta_frametime, multiplier);
 
     if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
-        camera_pos -= glm::normalize(glm::cross(up, camera_dir)) * camera_speed;
+        camera.UpdatePos(RIGHT, delta_frametime, multiplier);
 }
 
 // ajust glViewport if the size of window is changing
