@@ -1,5 +1,5 @@
-#ifndef camera_h
-#define camera_h
+#ifndef CAMERA_H
+#define CAMERA_H
 
 #include <glad/glad.h>
 #include <glm/glm.hpp>
@@ -18,7 +18,7 @@ public:
 	glm::vec3 camera_dir;
 	glm::vec3 world_up;
 
-	float camera_speed = 0.05;
+	float camera_speed = 0.05f;
 	float pitch = 0.0f, yaw = -90.0f;
 	float sensitivity = 0.1f;
 
