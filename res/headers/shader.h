@@ -93,7 +93,7 @@ public:
         glDeleteShader(vertex);
         glDeleteShader(fragment);
     }
-    void use() {
+    void use() const {
         glUseProgram(ID);
     }
     

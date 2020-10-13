@@ -40,9 +40,13 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <None Include="res\shaders\light_cube.fs" />
-    <None Include="res\shaders\light_cube.vs" />
     <None Include="res\dll\assimp-vc142-mtd.dll" />
+    <None Include="res\shaders\light_fragment.glsl" />
+    <None Include="res\shaders\light_vertex.glsl" />
+    <None Include="res\shaders\object_vertex.glsl" />
+    <None Include="res\shaders\object_fragment.glsl" />
+    <None Include="res\shaders\shadow_mapping_vertex.glsl" />
+    <None Include="res\shaders\shadow_mapping_fragment.glsl" />
   </ItemGroup>
   <ItemGroup>
     <Library Include="res\lib\assimp-vc142-mtd.lib" />
