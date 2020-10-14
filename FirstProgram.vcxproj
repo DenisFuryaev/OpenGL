@@ -173,6 +173,7 @@
     <None Include="res\shaders\object_fragment.glsl" />
     <None Include="res\shaders\object_vertex.glsl" />
     <None Include="res\shaders\shadow_mapping_fragment.glsl" />
+    <None Include="res\shaders\shadow_mapping_geometry.glsl" />
     <None Include="res\shaders\shadow_mapping_vertex.glsl" />
   </ItemGroup>
   <ItemGroup>

@@ -6,20 +6,21 @@ uniform vec3 light_color;
 uniform vec3 light_pos;
 uniform vec3 view_pos;
 
-uniform sampler2D shadowMap;
+uniform float far_plane;
+uniform samplerCube depthMap;
 
 in vec3 Normal;
 in vec3 FragPos;
-in vec4 FragPosLightSpace;
 
 float ComputeShadow() 
 {
-    vec3 pos = FragPosLightSpace.xyz * 0.5f + 0.5f;
-    if (pos.z > 1.0f)
-        pos.z = 1.0f;
-    float depth = texture(shadowMap, pos.xy).r;
+    vec3 lightToFrag = FragPos - light_pos;
+
+    float depth = texture(depthMap, lightToFrag).r;
+    depth *= far_plane;
+
     float bias = 0.05f;
-    return (depth + bias) < pos.z ? 0.0f : 1.0f;
+    return (depth + bias) < length(lightToFrag) ? 0.0f : 1.0f;
 }
 
 void main() 

@@ -81,7 +81,7 @@ int main()
     
     Shader LightingShader("res/shaders/object_vertex.glsl", "res/shaders/object_fragment.glsl");
     Shader ObjectShader("res/shaders/light_vertex.glsl", "res/shaders/light_fragment.glsl");
-    Shader ShadowShader("res/shaders/shadow_mapping_vertex.glsl", "res/shaders/shadow_mapping_fragment.glsl");
+    Shader ShadowShader("res/shaders/shadow_mapping_vertex.glsl", "res/shaders/shadow_mapping_fragment.glsl", "res/shaders/shadow_mapping_geometry.glsl");
 
     Model Teapot_model("res/models/teapot.obj");
     Model Sphere_model("res/models/sphere.obj");
@@ -102,34 +102,32 @@ int main()
 
     // ----------- shadow mapping ----------
 
-    // creating depth frame buffer
+    const unsigned int SHADOW_WIDTH = 2048, SHADOW_HEIGHT = 2048;
     unsigned int depthMapFBO;
     glGenFramebuffers(1, &depthMapFBO);
-
-    // creating depth texture
-    const unsigned int SHADOW_WIDTH = 2048, SHADOW_HEIGHT = 2048;
-    unsigned int depthMap;
-    glGenTextures(1, &depthMap);
-    glBindTexture(GL_TEXTURE_2D, depthMap);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, SHADOW_WIDTH, SHADOW_HEIGHT, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
-    float borderColor[] = { 1.0, 1.0, 1.0, 1.0 };
-    glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);
-
-    // binding depth texture to depth frame buffer
+    // create depth cubemap texture
+    unsigned int depthCubemap;
+    glGenTextures(1, &depthCubemap);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, depthCubemap);
+    for (unsigned int i = 0; i < 6; ++i)
+        glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_DEPTH_COMPONENT, SHADOW_WIDTH, SHADOW_HEIGHT, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+    // attach depth texture as FBO's depth buffer
     glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depthMap, 0);
+    glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, depthCubemap, 0);
     glDrawBuffer(GL_NONE);
     glReadBuffer(GL_NONE);
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
+
     // -------------------------------------
 
-
-
+    //ShadowShader.use();
+    //ShadowShader.setInt("depthMap", 1);
 
     // --------- render loop start ---------
     while (!glfwWindowShouldClose(window))
@@ -144,20 +142,25 @@ int main()
 
         // ---------------- rendering the depth map ----------------
 
-        glm::mat4 lightProjection, lightView;
-        glm::mat4 lightSpaceMatrix;
-        float near_plane = 0.1f, far_plane = 12.0f;
-        lightProjection = glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f, near_plane, far_plane);
-        lightView = glm::lookAt(light_pos, glm::vec3(0.0f), glm::vec3(0.0, 1.0, 0.0));
-        lightSpaceMatrix = lightProjection * lightView;
-        // render scene from light's point of view
-        ShadowShader.use();
-        ShadowShader.setMat4("lightSpaceMatrix", lightSpaceMatrix);
+        float near_plane = 1.0f;
+        float far_plane = 25.0f;
+        glm::mat4 shadowProj = glm::perspective(glm::radians(90.0f), (float)SHADOW_WIDTH / (float)SHADOW_HEIGHT, near_plane, far_plane);
+        std::vector<glm::mat4> shadowTransforms;
+        shadowTransforms.push_back(shadowProj * glm::lookAt(light_pos, light_pos + glm::vec3(1.0f, 0.0f, 0.0f), glm::vec3(0.0f, -1.0f, 0.0f)));
+        shadowTransforms.push_back(shadowProj * glm::lookAt(light_pos, light_pos + glm::vec3(-1.0f, 0.0f, 0.0f), glm::vec3(0.0f, -1.0f, 0.0f)));
+        shadowTransforms.push_back(shadowProj * glm::lookAt(light_pos, light_pos + glm::vec3(0.0f, 1.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f)));
+        shadowTransforms.push_back(shadowProj * glm::lookAt(light_pos, light_pos + glm::vec3(0.0f, -1.0f, 0.0f), glm::vec3(0.0f, 0.0f, -1.0f)));
+        shadowTransforms.push_back(shadowProj * glm::lookAt(light_pos, light_pos + glm::vec3(0.0f, 0.0f, 1.0f), glm::vec3(0.0f, -1.0f, 0.0f)));
+        shadowTransforms.push_back(shadowProj * glm::lookAt(light_pos, light_pos + glm::vec3(0.0f, 0.0f, -1.0f), glm::vec3(0.0f, -1.0f, 0.0f)));
 
         glViewport(0, 0, SHADOW_WIDTH, SHADOW_HEIGHT);
         glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
         glClear(GL_DEPTH_BUFFER_BIT);
-
+        ShadowShader.use();
+        for (unsigned int i = 0; i < 6; ++i)
+            ShadowShader.setMat4("shadowMatrices[" + std::to_string(i) + "]", shadowTransforms[i]);
+        ShadowShader.setFloat("far_plane", far_plane);
+        ShadowShader.setVec3("lightPos", light_pos);
         // ========================================================= 
 
         model = glm::mat4(1.0f);
@@ -174,13 +177,15 @@ int main()
         Pumpkin_model.Draw();
 
         // =========================================================
-
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+
+
+       
 
         // reset viewport
         glViewport(0, 0, SCR_WIDTH, SCR_HEIGHT);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
 
         // ------------------ drawing the teapot -------------------
 
@@ -197,23 +202,26 @@ int main()
         LightingShader.setMat4("model", model);
         LightingShader.setMat4("view", view);
         LightingShader.setMat4("projection", projection);
-        LightingShader.setMat4("lightSpaceMatrix", lightSpaceMatrix);
+        LightingShader.setFloat("far_plane", far_plane);
 
         glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, depthMap);
+        glBindTexture(GL_TEXTURE_CUBE_MAP, depthCubemap);
 
         Teapot_model.Draw();
 
+        LightingShader.setVec3("object_color", 0.8f, 0.4f, 0.4f);
         model = glm::mat4(1.0f);
         LightingShader.setMat4("model", model);
         Pumpkin_model.Draw();
 
         // ------------------- drawing the plane --------------------
 
+        //LightingShader.setBool("reverse_normals", 1);
         LightingShader.setVec3("object_color", 0.4f, 0.4f, 0.7f);
-        model = glm::scale(model, glm::vec3(10.0f, 0.0f, 10.0f));
+        //model = glm::scale(model, glm::vec3(10.0f, 0.0f, 20.0f));
         LightingShader.setMat4("model", model);
         Plane_model.Draw();
+        //LightingShader.setInt("reverse_normals", 0);
 
         // ------------------- drawing the light --------------------
 

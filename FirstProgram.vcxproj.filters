@@ -47,6 +47,7 @@
     <None Include="res\shaders\object_fragment.glsl" />
     <None Include="res\shaders\shadow_mapping_vertex.glsl" />
     <None Include="res\shaders\shadow_mapping_fragment.glsl" />
+    <None Include="res\shaders\shadow_mapping_geometry.glsl" />
   </ItemGroup>
   <ItemGroup>
     <Library Include="res\lib\assimp-vc142-mtd.lib" />
