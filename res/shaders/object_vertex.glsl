@@ -11,6 +11,7 @@ out vec3 Normal;
 out vec3 FragPos;
 out vec4 FragPosLightSpace;
 
+
 void main()
 {
     gl_Position = projection * view * model * vec4(aPos, 1.0);

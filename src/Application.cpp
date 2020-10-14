@@ -86,6 +86,7 @@ int main()
     Model Teapot_model("res/models/teapot.obj");
     Model Sphere_model("res/models/sphere.obj");
     Model Plane_model("res/models/plane.obj");
+    Model Pumpkin_model("res/models/pumpkin.obj");
     //Model Buddha_model("res/models/buddha.obj");
     //Model Car_model("res/models/Mercedes_300_SL.obj");
 
@@ -125,8 +126,6 @@ int main()
     glReadBuffer(GL_NONE);
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
-    ShadowShader.setInt("shadowMap", 1);
-
     // -------------------------------------
 
 
@@ -145,11 +144,9 @@ int main()
 
         // ---------------- rendering the depth map ----------------
 
-
-
         glm::mat4 lightProjection, lightView;
         glm::mat4 lightSpaceMatrix;
-        float near_plane = 1.0f, far_plane = 7.5f;
+        float near_plane = 0.1f, far_plane = 12.0f;
         lightProjection = glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f, near_plane, far_plane);
         lightView = glm::lookAt(light_pos, glm::vec3(0.0f), glm::vec3(0.0, 1.0, 0.0));
         lightSpaceMatrix = lightProjection * lightView;
@@ -162,13 +159,20 @@ int main()
         glClear(GL_DEPTH_BUFFER_BIT);
 
         // ========================================================= 
+
         model = glm::mat4(1.0f);
+        model = glm::translate(model, glm::vec3(3.0f, 0.0f, -3.0f));
         ShadowShader.setMat4("model", model);
         Teapot_model.Draw();
 
         model = glm::scale(model, glm::vec3(10.0f, 0.0f, 10.0f));
         ShadowShader.setMat4("model", model);
         Plane_model.Draw();
+
+        model = glm::mat4(1.0f);
+        ShadowShader.setMat4("model", model);
+        Pumpkin_model.Draw();
+
         // =========================================================
 
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -176,8 +180,6 @@ int main()
         // reset viewport
         glViewport(0, 0, SCR_WIDTH, SCR_HEIGHT);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-
 
 
         // ------------------ drawing the teapot -------------------
@@ -189,6 +191,7 @@ int main()
         LightingShader.setVec3("view_pos", camera.camera_pos);
 
         model = glm::mat4(1.0f);
+        model = glm::translate(model, glm::vec3(3.0f, 0.0f, -3.0f));
         view = camera.GetViewMatrix();
 
         LightingShader.setMat4("model", model);
@@ -201,10 +204,14 @@ int main()
 
         Teapot_model.Draw();
 
+        model = glm::mat4(1.0f);
+        LightingShader.setMat4("model", model);
+        Pumpkin_model.Draw();
+
         // ------------------- drawing the plane --------------------
 
         LightingShader.setVec3("object_color", 0.4f, 0.4f, 0.7f);
-        model = glm::scale(model,glm::vec3(10.0f, 0.0f, 10.0f));
+        model = glm::scale(model, glm::vec3(10.0f, 0.0f, 10.0f));
         LightingShader.setMat4("model", model);
         Plane_model.Draw();
 
