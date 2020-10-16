@@ -15,14 +15,16 @@
 #include <math.h>
 
 
-void framebuffer_size_callback(GLFWwindow* window, int width, int height);
-void processInput(GLFWwindow *window);
-void mouse_callback(GLFWwindow* window, double xpos, double ypos);
-void mouse_button_callback(GLFWwindow* window, int button, int action, int mods);
+void framebuffer_size_callback(GLFWwindow * window, int width, int height);
+void processInput(GLFWwindow * window);
+void mouse_callback(GLFWwindow * window, double xpos, double ypos);
+void mouse_button_callback(GLFWwindow * window, int button, int action, int mods);
+void RenderScene(const Shader & shader, Model models[]);
+unsigned int loadCubemap(vector<std::string> faces);
 
-// screen settings
-const unsigned int SCR_WIDTH = 1300;
-const unsigned int SCR_HEIGHT = 1300;
+// screen settings (aspect ratio = 16/9)
+const unsigned int SCR_WIDTH = 1706;
+const unsigned int SCR_HEIGHT = 960;
 
 // frametime variables
 float delta_frametime = 0.0f;
@@ -34,7 +36,7 @@ float prev_xpos = 0 , prev_ypos = 0;
 bool first_enter = true;
 
 // lighting settings
-glm::vec3 light_pos(1.0f, 4.0f, 4.0f);
+glm::vec3 light_pos(1.0f, 8.0f, 4.0f);
 
 // camera settings
 Camera camera(glm::vec3(0.0f, 3.0f, 15.0f), glm::vec3(0.0f, 0.0f, -1.0f));
@@ -74,26 +76,40 @@ int main()
 
     // -- models load and matrix creation --
 
-    // changing color of screen (by c clear values for the color buffers )
+    // changing color of screen ( by setting default values for the color buffers )
     glClearColor(0.3f, 0.3f, 0.5f, 1.0f);
     glEnable(GL_DEPTH_TEST);
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
     
-    Shader LightingShader("res/shaders/object_vertex.glsl", "res/shaders/object_fragment.glsl");
-    Shader ObjectShader("res/shaders/light_vertex.glsl", "res/shaders/light_fragment.glsl");
+    Shader LightShader("res/shaders/light_vertex.glsl", "res/shaders/light_fragment.glsl");
+    Shader ObjectShader("res/shaders/object_vertex.glsl", "res/shaders/object_fragment.glsl");
     Shader ShadowShader("res/shaders/shadow_mapping_vertex.glsl", "res/shaders/shadow_mapping_fragment.glsl", "res/shaders/shadow_mapping_geometry.glsl");
+    Shader SkyboxShader("res/shaders/skybox_vertex.glsl", "res/shaders/skybox_fragment.glsl");
+
+    vector<std::string> faces
+    {
+        "res/textures/japan_park_skybox/posx.jpg",
+        "res/textures/japan_park_skybox/negx.jpg",
+        "res/textures/japan_park_skybox/posy.jpg",
+        "res/textures/japan_park_skybox/negy.jpg",
+        "res/textures/japan_park_skybox/posz.jpg",
+        "res/textures/japan_park_skybox/negz.jpg"
+    };
+    unsigned int cubemapTexture = loadCubemap(faces);
 
     Model Teapot_model("res/models/teapot.obj");
     Model Sphere_model("res/models/sphere.obj");
     Model Plane_model("res/models/plane.obj");
     Model Pumpkin_model("res/models/pumpkin.obj");
+    Model Box_model("res/models/box.obj");
     //Model Buddha_model("res/models/buddha.obj");
     //Model Car_model("res/models/Mercedes_300_SL.obj");
+    Model models[4] = { Plane_model , Teapot_model , Pumpkin_model , Sphere_model };
 
     glm::mat4 view = glm::mat4(1.0f);
     glm::mat4 model = glm::mat4(1.0f);
     model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f));
-    glm::mat4 projection = glm::perspective(glm::radians(45.0f), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
+    glm::mat4 projection = glm::perspective(glm::radians(60.0f), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
 
     // -------------------------------------
 
@@ -105,17 +121,23 @@ int main()
     const unsigned int SHADOW_WIDTH = 2048, SHADOW_HEIGHT = 2048;
     unsigned int depthMapFBO;
     glGenFramebuffers(1, &depthMapFBO);
+
     // create depth cubemap texture
     unsigned int depthCubemap;
     glGenTextures(1, &depthCubemap);
     glBindTexture(GL_TEXTURE_CUBE_MAP, depthCubemap);
+
     for (unsigned int i = 0; i < 6; ++i)
         glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_DEPTH_COMPONENT, SHADOW_WIDTH, SHADOW_HEIGHT, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+
+
     // attach depth texture as FBO's depth buffer
     glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
     glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, depthCubemap, 0);
@@ -123,11 +145,10 @@ int main()
     glReadBuffer(GL_NONE);
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
-
     // -------------------------------------
 
-    //ShadowShader.use();
-    //ShadowShader.setInt("depthMap", 1);
+
+
 
     // --------- render loop start ---------
     while (!glfwWindowShouldClose(window))
@@ -143,7 +164,7 @@ int main()
         // ---------------- rendering the depth map ----------------
 
         float near_plane = 1.0f;
-        float far_plane = 25.0f;
+        float far_plane = 30.0f;
         glm::mat4 shadowProj = glm::perspective(glm::radians(90.0f), (float)SHADOW_WIDTH / (float)SHADOW_HEIGHT, near_plane, far_plane);
         std::vector<glm::mat4> shadowTransforms;
         shadowTransforms.push_back(shadowProj * glm::lookAt(light_pos, light_pos + glm::vec3(1.0f, 0.0f, 0.0f), glm::vec3(0.0f, -1.0f, 0.0f)));
@@ -161,80 +182,73 @@ int main()
             ShadowShader.setMat4("shadowMatrices[" + std::to_string(i) + "]", shadowTransforms[i]);
         ShadowShader.setFloat("far_plane", far_plane);
         ShadowShader.setVec3("lightPos", light_pos);
+
         // ========================================================= 
 
-        model = glm::mat4(1.0f);
-        model = glm::translate(model, glm::vec3(3.0f, 0.0f, -3.0f));
-        ShadowShader.setMat4("model", model);
-        Teapot_model.Draw();
-
-        model = glm::scale(model, glm::vec3(10.0f, 0.0f, 10.0f));
-        ShadowShader.setMat4("model", model);
-        Plane_model.Draw();
-
-        model = glm::mat4(1.0f);
-        ShadowShader.setMat4("model", model);
-        Pumpkin_model.Draw();
+        RenderScene(ShadowShader, models);
 
         // =========================================================
+
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
-
-
-       
 
         // reset viewport
         glViewport(0, 0, SCR_WIDTH, SCR_HEIGHT);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        // ------------------ drawing the teapot -------------------
 
-        LightingShader.use();
-        LightingShader.setVec3("object_color", 0.8f, 0.35f, 0.54f);
-        LightingShader.setVec3("light_color", 1.0f, 1.0f, 1.0f);
-        LightingShader.setVec3("light_pos", light_pos);
-        LightingShader.setVec3("view_pos", camera.camera_pos);
+        // ---------- drawing objects of the scene ------------
 
         model = glm::mat4(1.0f);
         model = glm::translate(model, glm::vec3(3.0f, 0.0f, -3.0f));
         view = camera.GetViewMatrix();
 
-        LightingShader.setMat4("model", model);
-        LightingShader.setMat4("view", view);
-        LightingShader.setMat4("projection", projection);
-        LightingShader.setFloat("far_plane", far_plane);
+        ObjectShader.use();
+        ObjectShader.setVec3("object_color", 0.8f, 0.35f, 0.54f);
+        ObjectShader.setVec3("light_color", 1.0f, 1.0f, 1.0f);
+        ObjectShader.setVec3("light_pos", light_pos);
+        ObjectShader.setVec3("view_pos", camera.camera_pos);
+        ObjectShader.setMat4("model", model);
+        ObjectShader.setMat4("view", view);
+        ObjectShader.setMat4("projection", projection);
+        ObjectShader.setFloat("far_plane", far_plane);
 
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_CUBE_MAP, depthCubemap);
 
         Teapot_model.Draw();
 
-        LightingShader.setVec3("object_color", 0.8f, 0.4f, 0.4f);
+        ObjectShader.setVec3("object_color", 0.8f, 0.4f, 0.4f);
         model = glm::mat4(1.0f);
-        LightingShader.setMat4("model", model);
+        ObjectShader.setMat4("model", model);
         Pumpkin_model.Draw();
 
-        // ------------------- drawing the plane --------------------
-
-        //LightingShader.setBool("reverse_normals", 1);
-        LightingShader.setVec3("object_color", 0.4f, 0.4f, 0.7f);
-        //model = glm::scale(model, glm::vec3(10.0f, 0.0f, 20.0f));
-        LightingShader.setMat4("model", model);
+        ObjectShader.setVec3("object_color", 0.4f, 0.4f, 0.7f);
+        ObjectShader.setMat4("model", model);
         Plane_model.Draw();
-        //LightingShader.setInt("reverse_normals", 0);
 
         // ------------------- drawing the light --------------------
 
-        ObjectShader.use();
+        LightShader.use();
         model = glm::mat4(1.0f);
         model = glm::translate(model, light_pos);
         model = glm::scale(model, glm::vec3(0.1f));
 
-        ObjectShader.setMat4("model", model);
-        ObjectShader.setMat4("view", view);
-        ObjectShader.setMat4("projection", projection);
+        LightShader.setMat4("model", model);
+        LightShader.setMat4("view", view);
+        LightShader.setMat4("projection", projection);
 
         Sphere_model.Draw();
+
+        // ------------------ drawing the skybox --------------------
+
+        SkyboxShader.use();
+        glDepthFunc(GL_LEQUAL);
+        view = glm::mat4(glm::mat3(camera.GetViewMatrix()));
+        SkyboxShader.setMat4("view", view);
+        SkyboxShader.setMat4("projection", projection);
+        glBindTexture(GL_TEXTURE_CUBE_MAP, cubemapTexture);
+        Box_model.Draw();
+        glDepthFunc(GL_LESS);
         
         // ----------------------------------------------------------
 
@@ -251,6 +265,56 @@ int main()
 }
 
 
+
+void RenderScene(const Shader & shader, Model models[])
+{
+    glm::mat4 model = glm::mat4(1.0f);
+
+    model = glm::scale(model, glm::vec3(10.0f, 0.0f, 10.0f));
+    shader.setMat4("model", model);
+    models[0].Draw();
+
+    model = glm::mat4(1.0f);
+    model = glm::translate(model, glm::vec3(3.0f, 0.0f, -3.0f));
+    shader.setMat4("model", model);
+    models[1].Draw();
+
+    model = glm::mat4(1.0f);
+    shader.setMat4("model", model);
+    models[2].Draw();
+}
+
+
+// loading the cubemap for skybox
+unsigned int loadCubemap(vector<std::string> faces)
+{
+    unsigned int textureID;
+    glGenTextures(1, &textureID);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, textureID);
+
+    int width, height, nrChannels;
+    for (unsigned int i = 0; i < faces.size(); i++)
+    {
+        unsigned char* data = stbi_load(faces[i].c_str(), &width, &height, &nrChannels, 0);
+        if (data)
+        {
+            glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+            stbi_image_free(data);
+        }
+        else
+        {
+            std::cout << "Cubemap texture failed to load at path: " << faces[i] << std::endl;
+            stbi_image_free(data);
+        }
+    }
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+
+    return textureID;
+}
 
 
 // listen for mouse movments for changing camera direction

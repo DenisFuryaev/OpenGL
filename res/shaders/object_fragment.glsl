@@ -17,10 +17,15 @@ float ComputeShadow()
     vec3 lightToFrag = FragPos - light_pos;
 
     float depth = texture(depthMap, lightToFrag).r;
+
+    // if object is out of the frustum return 1, so there is no dark region out of the fov of shadow perspective projection 
+    if (depth == 1)
+        return 1.0f;
+
     depth *= far_plane;
 
-    float bias = 0.05f;
-    return (depth + bias) < length(lightToFrag) ? 0.0f : 1.0f;
+    float bias = 0.1f;
+    return length(lightToFrag) > (depth + bias) ? 0.0f : 1.0f;
 }
 
 void main() 
