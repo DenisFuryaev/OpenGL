@@ -168,6 +168,8 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="res\dll\assimp-vc142-mtd.dll" />
+    <None Include="res\shaders\environment_mapping_fragment.glsl" />
+    <None Include="res\shaders\environment_mapping_vertex.glsl" />
     <None Include="res\shaders\light_fragment.glsl" />
     <None Include="res\shaders\light_vertex.glsl" />
     <None Include="res\shaders\object_fragment.glsl" />
@@ -177,6 +179,8 @@
     <None Include="res\shaders\shadow_mapping_vertex.glsl" />
     <None Include="res\shaders\skybox_fragment.glsl" />
     <None Include="res\shaders\skybox_vertex.glsl" />
+    <None Include="res\shaders\texture_fragment.glsl" />
+    <None Include="res\shaders\textutre_vertex.glsl" />
   </ItemGroup>
   <ItemGroup>
     <Library Include="res\lib\assimp-vc142-mtd.lib" />

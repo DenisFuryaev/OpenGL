@@ -19,7 +19,7 @@ void framebuffer_size_callback(GLFWwindow * window, int width, int height);
 void processInput(GLFWwindow * window);
 void mouse_callback(GLFWwindow * window, double xpos, double ypos);
 void mouse_button_callback(GLFWwindow * window, int button, int action, int mods);
-void RenderScene(const Shader & shader, Model models[]);
+void RenderScene( Shader & shader, Model models[]);
 unsigned int loadCubemap(vector<std::string> faces);
 
 // screen settings (aspect ratio = 16/9)
@@ -85,6 +85,8 @@ int main()
     Shader ObjectShader("res/shaders/object_vertex.glsl", "res/shaders/object_fragment.glsl");
     Shader ShadowShader("res/shaders/shadow_mapping_vertex.glsl", "res/shaders/shadow_mapping_fragment.glsl", "res/shaders/shadow_mapping_geometry.glsl");
     Shader SkyboxShader("res/shaders/skybox_vertex.glsl", "res/shaders/skybox_fragment.glsl");
+    Shader EnvironmentShader("res/shaders/environment_mapping_vertex.glsl", "res/shaders/environment_mapping_fragment.glsl");
+    //Shader TextureShader("res/shaders/texture_vertex.glsl", "res/shaders/texture_fragment.glsl");
 
     vector<std::string> faces
     {
@@ -97,9 +99,9 @@ int main()
     };
     unsigned int cubemapTexture = loadCubemap(faces);
 
-    Model Teapot_model("res/models/teapot.obj");
+    Model Teapot_model("res/models/Teapot/teapot.obj");
     Model Sphere_model("res/models/sphere.obj");
-    Model Plane_model("res/models/plane.obj");
+    Model Plane_model("res/models/Table/plane.obj");
     Model Pumpkin_model("res/models/pumpkin.obj");
     Model Box_model("res/models/box.obj");
     //Model Buddha_model("res/models/buddha.obj");
@@ -211,20 +213,26 @@ int main()
         ObjectShader.setMat4("view", view);
         ObjectShader.setMat4("projection", projection);
         ObjectShader.setFloat("far_plane", far_plane);
+        //glActiveTexture(GL_TEXTURE1);
+        //glBindTexture(GL_TEXTURE_CUBE_MAP, depthCubemap);
 
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_CUBE_MAP, depthCubemap);
+        Teapot_model.Draw(ObjectShader);
 
-        Teapot_model.Draw();
-
-        ObjectShader.setVec3("object_color", 0.8f, 0.4f, 0.4f);
         model = glm::mat4(1.0f);
         ObjectShader.setMat4("model", model);
-        Pumpkin_model.Draw();
+        Plane_model.Draw(ObjectShader);
 
-        ObjectShader.setVec3("object_color", 0.4f, 0.4f, 0.7f);
-        ObjectShader.setMat4("model", model);
-        Plane_model.Draw();
+
+
+        
+        EnvironmentShader.use();
+        model = glm::mat4(1.0f);
+        EnvironmentShader.setMat4("model", model);
+        EnvironmentShader.setMat4("view", view);
+        EnvironmentShader.setMat4("projection", projection);
+        EnvironmentShader.setVec3("view_pos", camera.camera_pos);
+        glBindTexture(GL_TEXTURE_CUBE_MAP, cubemapTexture);
+        Pumpkin_model.Draw(ObjectShader);
 
         // ------------------- drawing the light --------------------
 
@@ -237,8 +245,8 @@ int main()
         LightShader.setMat4("view", view);
         LightShader.setMat4("projection", projection);
 
-        Sphere_model.Draw();
-
+        Sphere_model.Draw(ObjectShader);
+        
         // ------------------ drawing the skybox --------------------
 
         SkyboxShader.use();
@@ -247,7 +255,7 @@ int main()
         SkyboxShader.setMat4("view", view);
         SkyboxShader.setMat4("projection", projection);
         glBindTexture(GL_TEXTURE_CUBE_MAP, cubemapTexture);
-        Box_model.Draw();
+        Box_model.Draw(ObjectShader);
         glDepthFunc(GL_LESS);
         
         // ----------------------------------------------------------
@@ -266,22 +274,23 @@ int main()
 
 
 
-void RenderScene(const Shader & shader, Model models[])
+void RenderScene( Shader & shader, Model models[])
 {
     glm::mat4 model = glm::mat4(1.0f);
 
     model = glm::scale(model, glm::vec3(10.0f, 0.0f, 10.0f));
     shader.setMat4("model", model);
-    models[0].Draw();
-
+    models[0].Draw(shader);
+    
     model = glm::mat4(1.0f);
     model = glm::translate(model, glm::vec3(3.0f, 0.0f, -3.0f));
     shader.setMat4("model", model);
-    models[1].Draw();
+    models[1].Draw(shader);
 
     model = glm::mat4(1.0f);
     shader.setMat4("model", model);
-    models[2].Draw();
+    models[2].Draw(shader);
+    
 }
 
 
