@@ -106,7 +106,7 @@ int main()
     Model Box_model("res/models/box.obj");
     //Model Buddha_model("res/models/buddha.obj");
     //Model Car_model("res/models/Mercedes_300_SL.obj");
-    Model models[4] = { Plane_model , Teapot_model , Pumpkin_model , Sphere_model };
+    Model models[4] = { Plane_model , Teapot_model , Pumpkin_model, Sphere_model };
 
     glm::mat4 view = glm::mat4(1.0f);
     glm::mat4 model = glm::mat4(1.0f);
@@ -150,6 +150,9 @@ int main()
     // -------------------------------------
 
 
+    ObjectShader.use();
+    ObjectShader.setInt("diffuse_texture1", 0);
+    ObjectShader.setInt("depthMap", 1);
 
 
     // --------- render loop start ---------
@@ -213,26 +216,26 @@ int main()
         ObjectShader.setMat4("view", view);
         ObjectShader.setMat4("projection", projection);
         ObjectShader.setFloat("far_plane", far_plane);
-        //glActiveTexture(GL_TEXTURE1);
-        //glBindTexture(GL_TEXTURE_CUBE_MAP, depthCubemap);
-
+        glActiveTexture(GL_TEXTURE1);
+        glBindTexture(GL_TEXTURE_CUBE_MAP, depthCubemap);
         Teapot_model.Draw(ObjectShader);
+
 
         model = glm::mat4(1.0f);
         ObjectShader.setMat4("model", model);
         Plane_model.Draw(ObjectShader);
 
-
-
         
         EnvironmentShader.use();
         model = glm::mat4(1.0f);
+        model = glm::translate(model, glm::vec3(0.0f, 10.0f, 0.0f));
         EnvironmentShader.setMat4("model", model);
         EnvironmentShader.setMat4("view", view);
         EnvironmentShader.setMat4("projection", projection);
         EnvironmentShader.setVec3("view_pos", camera.camera_pos);
+        glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_CUBE_MAP, cubemapTexture);
-        Pumpkin_model.Draw(ObjectShader);
+        Sphere_model.Draw(EnvironmentShader);
 
         // ------------------- drawing the light --------------------
 
@@ -245,7 +248,7 @@ int main()
         LightShader.setMat4("view", view);
         LightShader.setMat4("projection", projection);
 
-        Sphere_model.Draw(ObjectShader);
+        Sphere_model.Draw(LightShader);
         
         // ------------------ drawing the skybox --------------------
 
@@ -254,8 +257,9 @@ int main()
         view = glm::mat4(glm::mat3(camera.GetViewMatrix()));
         SkyboxShader.setMat4("view", view);
         SkyboxShader.setMat4("projection", projection);
+        glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_CUBE_MAP, cubemapTexture);
-        Box_model.Draw(ObjectShader);
+        Box_model.Draw(SkyboxShader);
         glDepthFunc(GL_LESS);
         
         // ----------------------------------------------------------

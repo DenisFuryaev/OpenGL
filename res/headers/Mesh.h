@@ -57,19 +57,20 @@ public:
         unsigned int specularNr = 1;
         unsigned int normalNr = 1;
         unsigned int heightNr = 1;
-        for (unsigned int i = 0; i < textures.size(); i++)
+        unsigned int i = 0;
+        for (i = 0; i < textures.size(); i++)
         {
             glActiveTexture(GL_TEXTURE0 + i); // active proper texture unit before binding
             // retrieve texture number (the N in diffuse_textureN)
             string number;
             string name = textures[i].type;
-            if (name == "texture_diffuse")
+            if (name == "diffuse_texture")
                 number = std::to_string(diffuseNr++);
-            else if (name == "texture_specular")
+            else if (name == "specular_texture")
                 number = std::to_string(specularNr++); // transfer unsigned int to stream
-            else if (name == "texture_normal")
+            else if (name == "normaltexture_")
                 number = std::to_string(normalNr++); // transfer unsigned int to stream
-            else if (name == "texture_height")
+            else if (name == "height_texture")
                 number = std::to_string(heightNr++); // transfer unsigned int to stream
 
             // now set the sampler to the correct texture unit
@@ -77,6 +78,7 @@ public:
             // and finally bind the texture
             glBindTexture(GL_TEXTURE_2D, textures[i].id);
         }
+
 
         // draw mesh
         glBindVertexArray(VAO);

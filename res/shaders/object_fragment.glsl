@@ -7,8 +7,8 @@ uniform vec3 light_pos;
 uniform vec3 view_pos;
 
 uniform float far_plane;
+uniform sampler2D diffuse_texture1;
 uniform samplerCube depthMap;
-uniform sampler2D texture_diffuse1;
 
 in vec3 Normal;
 in vec3 FragPos;
@@ -27,7 +27,12 @@ float ComputeShadow()
     depth *= far_plane;
 
     float bias = 0.1f;
-    return length(lightToFrag) > (depth + bias) ? 0.0f : 1.0f;
+    float delta = length(lightToFrag) - (depth + bias);
+
+    if (delta > 0) 
+        return 0.0f;
+    else
+        return 1.0f;
 }
 
 void main() 
@@ -37,9 +42,9 @@ void main()
     
     float ambient_strength = 0.55f;
 
-    vec3 ambient_color = texture(texture_diffuse1, TexCoords).rgb;
+    vec3 ambient_color = texture(diffuse_texture1, TexCoords).rgb;
 
-    vec3 ambient = ambient_color  * light_color;
+    vec3 ambient = 0.4 * ambient_color  * light_color;
 
     vec3 light_dir = normalize(light_pos - FragPos);
     float diff = max(dot(light_dir, normal), 0); 
@@ -53,9 +58,8 @@ void main()
     vec3 specular = specular_strength * spec * light_color;
 
 
-    //float shadow = ComputeShadow();
-    //vec3 result = (ambient + shadow * (diffuse + specular)) * ambient_color;
+    float shadow = ComputeShadow();
+    vec3 result = (ambient + shadow * (diffuse + specular)) * ambient_color;
 
-    vec3 result = (ambient +  (diffuse + specular)) * ambient_color;
     FragColor = vec4(result , 1.0f);
 }

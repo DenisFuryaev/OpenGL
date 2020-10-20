@@ -11,8 +11,13 @@ uniform vec3 view_pos;
 void main()
 {
     vec3 normal = normalize(Normal);
-    vec3 FragToView = normalize(view_pos - FragPos);
-    vec3 reflection_vector = 2 * dot(normal, FragToView) * normal - FragToView;
+    vec3 view = normalize(view_pos - FragPos);
+    vec3 reflection = 2 * dot(normal, view) * normal - view;
 
-    FragColor = texture(skybox, reflection_vector);
+    float refravtive_index = 0.62f; // for glass
+    float cos_angle = dot(normal, view);
+    float sin_angle = sqrt(1 - cos_angle * cos_angle);
+    vec3 refraction =  refravtive_index * -view + (refravtive_index * cos_angle - sqrt(1 - (refravtive_index * refravtive_index * sin_angle * sin_angle))) * normal;
+    //vec3 refraction = refract(view, normal, refravtive_index);
+    FragColor = texture(skybox, refraction) ;
 }
