@@ -165,6 +165,8 @@
     <ClInclude Include="res\headers\camera.h" />
     <ClInclude Include="res\headers\Mesh.h" />
     <ClInclude Include="res\headers\Model.h" />
+    <ClInclude Include="res\headers\shader.h" />
+    <ClInclude Include="res\headers\stb_image.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="res\dll\assimp-vc142-mtd.dll" />
@@ -172,6 +174,8 @@
     <None Include="res\shaders\environment_mapping_vertex.glsl" />
     <None Include="res\shaders\light_fragment.glsl" />
     <None Include="res\shaders\light_vertex.glsl" />
+    <None Include="res\shaders\normal_mapping_fragment.glsl" />
+    <None Include="res\shaders\normal_mapping_vertex.glsl" />
     <None Include="res\shaders\object_fragment.glsl" />
     <None Include="res\shaders\object_vertex.glsl" />
     <None Include="res\shaders\shadow_mapping_fragment.glsl" />
@@ -180,6 +184,7 @@
     <None Include="res\shaders\skybox_fragment.glsl" />
     <None Include="res\shaders\skybox_vertex.glsl" />
     <None Include="res\shaders\texture_fragment.glsl" />
+    <None Include="res\shaders\texture_vertex.glsl" />
     <None Include="res\shaders\textutre_vertex.glsl" />
   </ItemGroup>
   <ItemGroup>

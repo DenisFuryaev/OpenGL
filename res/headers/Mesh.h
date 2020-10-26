@@ -68,7 +68,7 @@ public:
                 number = std::to_string(diffuseNr++);
             else if (name == "specular_texture")
                 number = std::to_string(specularNr++); // transfer unsigned int to stream
-            else if (name == "normaltexture_")
+            else if (name == "normal_texture")
                 number = std::to_string(normalNr++); // transfer unsigned int to stream
             else if (name == "height_texture")
                 number = std::to_string(heightNr++); // transfer unsigned int to stream

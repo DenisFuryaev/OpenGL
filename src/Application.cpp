@@ -86,6 +86,7 @@ int main()
     Shader ShadowShader("res/shaders/shadow_mapping_vertex.glsl", "res/shaders/shadow_mapping_fragment.glsl", "res/shaders/shadow_mapping_geometry.glsl");
     Shader SkyboxShader("res/shaders/skybox_vertex.glsl", "res/shaders/skybox_fragment.glsl");
     Shader EnvironmentShader("res/shaders/environment_mapping_vertex.glsl", "res/shaders/environment_mapping_fragment.glsl");
+    Shader NormalShader("res/shaders/normal_mapping_vertex.glsl", "res/shaders/normal_mapping_fragment.glsl");
     //Shader TextureShader("res/shaders/texture_vertex.glsl", "res/shaders/texture_fragment.glsl");
 
     vector<std::string> faces
@@ -106,7 +107,7 @@ int main()
     Model Box_model("res/models/box.obj");
     //Model Buddha_model("res/models/buddha.obj");
     //Model Car_model("res/models/Mercedes_300_SL.obj");
-    Model models[4] = { Plane_model , Teapot_model , Pumpkin_model, Sphere_model };
+    Model models[3] = { Plane_model , Teapot_model , Pumpkin_model };
 
     glm::mat4 view = glm::mat4(1.0f);
     glm::mat4 model = glm::mat4(1.0f);
@@ -154,6 +155,10 @@ int main()
     ObjectShader.setInt("diffuse_texture1", 0);
     ObjectShader.setInt("depthMap", 1);
 
+    NormalShader.use();
+    NormalShader.setInt("diffuse_texture1", 0);
+    NormalShader.setInt("normal_texture1", 1);
+    NormalShader.setInt("depthMap", 2);
 
     // --------- render loop start ---------
     while (!glfwWindowShouldClose(window))
@@ -169,7 +174,7 @@ int main()
         // ---------------- rendering the depth map ----------------
 
         float near_plane = 1.0f;
-        float far_plane = 30.0f;
+        float far_plane = 40.0f;
         glm::mat4 shadowProj = glm::perspective(glm::radians(90.0f), (float)SHADOW_WIDTH / (float)SHADOW_HEIGHT, near_plane, far_plane);
         std::vector<glm::mat4> shadowTransforms;
         shadowTransforms.push_back(shadowProj * glm::lookAt(light_pos, light_pos + glm::vec3(1.0f, 0.0f, 0.0f), glm::vec3(0.0f, -1.0f, 0.0f)));
@@ -220,10 +225,18 @@ int main()
         glBindTexture(GL_TEXTURE_CUBE_MAP, depthCubemap);
         Teapot_model.Draw(ObjectShader);
 
-
+        NormalShader.use();
         model = glm::mat4(1.0f);
-        ObjectShader.setMat4("model", model);
-        Plane_model.Draw(ObjectShader);
+        NormalShader.setVec3("light_color", 1.0f, 1.0f, 1.0f);
+        NormalShader.setVec3("light_pos", light_pos);
+        NormalShader.setVec3("view_pos", camera.camera_pos);
+        NormalShader.setMat4("model", model);
+        NormalShader.setMat4("view", view);
+        NormalShader.setMat4("projection", projection);
+        NormalShader.setFloat("far_plane", far_plane);
+        glActiveTexture(GL_TEXTURE2);
+        glBindTexture(GL_TEXTURE_CUBE_MAP, depthCubemap);
+        Plane_model.Draw(NormalShader);
 
         
         EnvironmentShader.use();
@@ -291,9 +304,6 @@ void RenderScene( Shader & shader, Model models[])
     shader.setMat4("model", model);
     models[1].Draw(shader);
 
-    model = glm::mat4(1.0f);
-    shader.setMat4("model", model);
-    models[2].Draw(shader);
     
 }
 
@@ -362,11 +372,11 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
 // listen for (ESC) key for exit and (WASD) keys for changing camera position
 void processInput(GLFWwindow* window)
 {
-    float multiplier = 5.0f;
+    float multiplier = 5.0f, number = 7.0f;
     if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
-        multiplier /= 5;
+        multiplier /= number;
     if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS)
-        multiplier *= 5;
+        multiplier *= number;
 
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
         glfwSetWindowShouldClose(window, true);
