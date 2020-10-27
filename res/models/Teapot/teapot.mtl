@@ -10,5 +10,5 @@ Ke 0.000000 0.000000 0.000000
 Ni 1.450000
 d 1.000000
 illum 2
-map_Kd diffuse_green.jpg
-#bump_map normal.png
+map_Kd diffuse.jpg
+map_Bump normal.png

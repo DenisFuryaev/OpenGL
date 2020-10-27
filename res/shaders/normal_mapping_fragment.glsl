@@ -41,15 +41,16 @@ void main()
 {
     
     vec3 normal = texture(normal_texture1, TexCoords).rgb;
+    // from color to coordinates
     normal = normal * 2.0 - 1.0;
-    normal = -normalize(TBN * normal);
-    //normal = normalize(Normal);
+    // from tangent to world space
+    normal = normalize(TBN * normal);
     
-    float ambient_strength = 0.55f;
+    float ambient_strength = 0.5f;
 
     vec3 ambient_color = texture(diffuse_texture1, TexCoords).rgb;
 
-    vec3 ambient = 0.4 * ambient_color  * light_color;
+    vec3 ambient = ambient_strength * ambient_color  * light_color;
 
     vec3 light_dir = normalize(light_pos - FragPos);
     float diff = max(dot(light_dir, normal), 0); 

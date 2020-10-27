@@ -44,7 +44,7 @@ void main()
 
     vec3 ambient_color = texture(diffuse_texture1, TexCoords).rgb;
 
-    vec3 ambient = 0.4 * ambient_color  * light_color;
+    vec3 ambient = ambient_strength * ambient_color  * light_color;
 
     vec3 light_dir = normalize(light_pos - FragPos);
     float diff = max(dot(light_dir, normal), 0); 

@@ -1,3 +1,6 @@
+#include <iostream>
+#include <math.h>
+
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
@@ -10,9 +13,6 @@
 #include "Model.h"
 #include "shader.h"
 #include "camera.h"
-
-#include <iostream>
-#include <math.h>
 
 
 void framebuffer_size_callback(GLFWwindow * window, int width, int height);
@@ -105,9 +105,10 @@ int main()
     Model Plane_model("res/models/Table/plane.obj");
     Model Pumpkin_model("res/models/pumpkin.obj");
     Model Box_model("res/models/box.obj");
+    Model Cup_model("res/models/Cup/cup.obj");
     //Model Buddha_model("res/models/buddha.obj");
     //Model Car_model("res/models/Mercedes_300_SL.obj");
-    Model models[3] = { Plane_model , Teapot_model , Pumpkin_model };
+    Model models[3] = { Plane_model , Teapot_model , Cup_model };
 
     glm::mat4 view = glm::mat4(1.0f);
     glm::mat4 model = glm::mat4(1.0f);
@@ -212,18 +213,18 @@ int main()
         model = glm::translate(model, glm::vec3(3.0f, 0.0f, -3.0f));
         view = camera.GetViewMatrix();
 
-        ObjectShader.use();
-        ObjectShader.setVec3("object_color", 0.8f, 0.35f, 0.54f);
-        ObjectShader.setVec3("light_color", 1.0f, 1.0f, 1.0f);
-        ObjectShader.setVec3("light_pos", light_pos);
-        ObjectShader.setVec3("view_pos", camera.camera_pos);
-        ObjectShader.setMat4("model", model);
-        ObjectShader.setMat4("view", view);
-        ObjectShader.setMat4("projection", projection);
-        ObjectShader.setFloat("far_plane", far_plane);
+        NormalShader.use();
+        NormalShader.setVec3("object_color", 0.8f, 0.35f, 0.54f);
+        NormalShader.setVec3("light_color", 1.0f, 1.0f, 1.0f);
+        NormalShader.setVec3("light_pos", light_pos);
+        NormalShader.setVec3("view_pos", camera.camera_pos);
+        NormalShader.setMat4("model", model);
+        NormalShader.setMat4("view", view);
+        NormalShader.setMat4("projection", projection);
+        NormalShader.setFloat("far_plane", far_plane);
         glActiveTexture(GL_TEXTURE1);
         glBindTexture(GL_TEXTURE_CUBE_MAP, depthCubemap);
-        Teapot_model.Draw(ObjectShader);
+        Teapot_model.Draw(NormalShader);
 
         NormalShader.use();
         model = glm::mat4(1.0f);
@@ -241,14 +242,14 @@ int main()
         
         EnvironmentShader.use();
         model = glm::mat4(1.0f);
-        model = glm::translate(model, glm::vec3(0.0f, 10.0f, 0.0f));
+        model = glm::translate(model, glm::vec3(-5.0f, 0.0f, 2.0f));
         EnvironmentShader.setMat4("model", model);
         EnvironmentShader.setMat4("view", view);
         EnvironmentShader.setMat4("projection", projection);
         EnvironmentShader.setVec3("view_pos", camera.camera_pos);
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_CUBE_MAP, cubemapTexture);
-        Sphere_model.Draw(EnvironmentShader);
+        Cup_model.Draw(EnvironmentShader);
 
         // ------------------- drawing the light --------------------
 
@@ -304,7 +305,10 @@ void RenderScene( Shader & shader, Model models[])
     shader.setMat4("model", model);
     models[1].Draw(shader);
 
-    
+    model = glm::mat4(1.0f);
+    model = glm::translate(model, glm::vec3(-5.0f, 0.0f, 2.0f));
+    shader.setMat4("model", model);
+    models[2].Draw(shader);
 }
 
 
