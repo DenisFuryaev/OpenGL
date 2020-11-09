@@ -7,7 +7,7 @@
 
 
 # my igore and not ignore files
-!cup.obj
+!FirstProgram\res\models\Cup\cup.obj
 !table.obj
 !teapot.obj
 
