@@ -6,14 +6,10 @@
 
 
 
-# my igore files
-res/dll/
-res/lib/
-res/headers/assimp.h
-res/headers/stb_image.h
-src/glad.cpp
-src/stb_image.cpp
-
+# my igore and not ignore files
+!cup.obj
+!table.obj
+!teapot.obj
 
 # User-specific files
 *.rsuser
