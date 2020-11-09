@@ -7,9 +7,7 @@
 
 
 # my igore and not ignore files
-!FirstProgram\res\models\Cup\cup.obj
-!table.obj
-!teapot.obj
+!res/
 
 # User-specific files
 *.rsuser
