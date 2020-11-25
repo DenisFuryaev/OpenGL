@@ -22,7 +22,7 @@
 #include <vector>
 using namespace std;
 
-unsigned int TextureFromFile(const char * path, const string & directory);
+GLuint TextureFromFile(const char * path, const string & directory);
 
 class Model
 {
@@ -32,7 +32,7 @@ public:
 
     void Draw(Shader & shader)
     {
-        for (unsigned int i = 0; i < meshes.size(); i++)
+        for (GLuint i = 0; i < meshes.size(); i++)
             meshes[i].Draw(shader);
     }
 
@@ -65,7 +65,7 @@ private:
     void processNode(aiNode* node, const aiScene* scene)
     {
         // process each of mNumMeshes meshes in the current node
-        for (unsigned int i = 0; i < node->mNumMeshes; i++)
+        for (GLuint i = 0; i < node->mNumMeshes; i++)
         {
             // get mesh from array in scene object using index from array mMeshes stored in current node
             aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
@@ -73,7 +73,7 @@ private:
         }
 
         // after we've processed all of the meshes we can recursively process each of the children nodes
-        for (unsigned int i = 0; i < node->mNumChildren; i++)
+        for (GLuint i = 0; i < node->mNumChildren; i++)
             processNode(node->mChildren[i], scene);
     }
 
@@ -81,11 +81,11 @@ private:
     {
         // data to fill
         vector<Vertex> vertices;
-        vector<unsigned int> indices;
+        vector<GLuint> indices;
         vector<Texture> textures;
 
         // walk through each of the mesh's vertices
-        for (unsigned int i = 0; i < mesh->mNumVertices; i++)
+        for (GLuint i = 0; i < mesh->mNumVertices; i++)
         {
             Vertex vertex;
             glm::vec3 vector; 
@@ -134,10 +134,10 @@ private:
         }
 
         // indices
-        for (unsigned int i = 0; i < mesh->mNumFaces; i++)
+        for (GLuint i = 0; i < mesh->mNumFaces; i++)
         {
             aiFace face = mesh->mFaces[i];
-            for (unsigned int j = 0; j < face.mNumIndices; j++)
+            for (GLuint j = 0; j < face.mNumIndices; j++)
                 indices.push_back(face.mIndices[j]);
         }
 
@@ -167,13 +167,13 @@ private:
     vector<Texture> loadMaterialTextures(aiMaterial* material, aiTextureType type, string typeName)
     {
         vector<Texture> textures;
-        for (unsigned int i = 0; i < material->GetTextureCount(type); i++)
+        for (GLuint i = 0; i < material->GetTextureCount(type); i++)
         {
             aiString str;
             material->GetTexture(type, i, &str);
             // check if texture was loaded before and if so, continue to next iteration: skip loading a new texture
             bool skip = false;
-            for (unsigned int j = 0; j < textures_loaded.size(); j++)
+            for (GLuint j = 0; j < textures_loaded.size(); j++)
             {
                 if (std::strcmp(textures_loaded[j].path.data(), str.C_Str()) == 0)
                 {
@@ -197,12 +197,12 @@ private:
 };
 
 
-unsigned int TextureFromFile(const char* path, const string& directory)
+GLuint TextureFromFile(const char* path, const string& directory)
 {
     string filename = string(path);
     filename = directory + '/' + filename ;
 
-    unsigned int textureID;
+    GLuint textureID;
     glGenTextures(1, &textureID);
 
     int width, height, nrComponents;

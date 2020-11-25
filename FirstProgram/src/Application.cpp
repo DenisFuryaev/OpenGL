@@ -14,22 +14,18 @@
 #include "shader.h"
 #include "camera.h"
 
-
 void framebuffer_size_callback(GLFWwindow * window, int width, int height);
-void processInput(GLFWwindow * window);
 void mouse_callback(GLFWwindow * window, double xpos, double ypos);
 void mouse_button_callback(GLFWwindow * window, int button, int action, int mods);
+void processInput(GLFWwindow* window);
 void RenderScene( Shader & shader, Model models[]);
-unsigned int loadCubemap(vector<std::string> faces);
+GLuint loadCubemap(vector<std::string> faces);
 
 // screen settings (aspect ratio = 16/9)
-const unsigned int SCR_WIDTH = 1706;
-const unsigned int SCR_HEIGHT = 960;
+ GLuint SCR_WIDTH = 1244, SCR_HEIGHT = 700;
 
 // frametime variables
-float delta_frametime = 0.0f;
-float prev_frametime = 0.0f;
-float curr_frametime = 0.0f;
+float delta_frametime = 0.0f, prev_frametime = 0.0f, curr_frametime = 0.0f;
 
 // mouse event variables
 float prev_xpos = 0 , prev_ypos = 0;
@@ -41,9 +37,11 @@ glm::vec3 light_pos(1.0f, 8.0f, 4.0f);
 // camera settings
 Camera camera(glm::vec3(0.0f, 3.0f, 15.0f), glm::vec3(0.0f, 0.0f, -1.0f));
 
+
 int main()
 {
-    // ---- setting the window and GLFW ----
+
+    // -------- setting the GLFW and GLAD --------
 
     glfwInit();
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
@@ -62,6 +60,7 @@ int main()
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
     glfwSetCursorPosCallback(window, mouse_callback);
     glfwSetMouseButtonCallback(window, mouse_button_callback);
+    glfwSetWindowPos(window, 1200, 100);
 
     if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
     {
@@ -69,23 +68,24 @@ int main()
         return -1;
     }
 
-    // -------------------------------------
+    // -----------------------------------------
     
 
 
 
-    // -- models load and matrix creation --
+    // -------- shader, model and skybox load + matrix creation --------
 
     // changing color of screen ( by setting default values for the color buffers )
     glClearColor(0.3f, 0.3f, 0.5f, 1.0f);
     glEnable(GL_DEPTH_TEST);
+    // hide and lock cursor on the window
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
     
+    Shader EnvironmentShader("res/shaders/environment_mapping_vertex.glsl", "res/shaders/environment_mapping_fragment.glsl");
     Shader LightShader("res/shaders/light_vertex.glsl", "res/shaders/light_fragment.glsl");
     Shader ObjectShader("res/shaders/object_vertex.glsl", "res/shaders/object_fragment.glsl");
     Shader ShadowShader("res/shaders/shadow_mapping_vertex.glsl", "res/shaders/shadow_mapping_fragment.glsl", "res/shaders/shadow_mapping_geometry.glsl");
     Shader SkyboxShader("res/shaders/skybox_vertex.glsl", "res/shaders/skybox_fragment.glsl");
-    Shader EnvironmentShader("res/shaders/environment_mapping_vertex.glsl", "res/shaders/environment_mapping_fragment.glsl");
     Shader NormalShader("res/shaders/normal_mapping_vertex.glsl", "res/shaders/normal_mapping_fragment.glsl");
     //Shader TextureShader("res/shaders/texture_vertex.glsl", "res/shaders/texture_fragment.glsl");
 
@@ -98,16 +98,14 @@ int main()
         "res/textures/japan_park_skybox/posz.jpg",
         "res/textures/japan_park_skybox/negz.jpg"
     };
-    unsigned int cubemapTexture = loadCubemap(faces);
+    GLuint cubemapTexture = loadCubemap(faces);
 
     Model Teapot_model("res/models/Teapot/teapot.obj");
     Model Sphere_model("res/models/sphere.obj");
     Model Plane_model("res/models/Table/plane.obj");
-    Model Pumpkin_model("res/models/pumpkin.obj");
     Model Box_model("res/models/box.obj");
     Model Cup_model("res/models/Cup/cup.obj");
-    //Model Buddha_model("res/models/buddha.obj");
-    //Model Car_model("res/models/Mercedes_300_SL.obj");
+    //Model Pumpkin_model("res/models/pumpkin.obj");
     Model models[3] = { Plane_model , Teapot_model , Cup_model };
 
     glm::mat4 view = glm::mat4(1.0f);
@@ -115,32 +113,30 @@ int main()
     model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f));
     glm::mat4 projection = glm::perspective(glm::radians(60.0f), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
 
-    // -------------------------------------
+    // -----------------------------------------------------------------
 
 
 
 
-    // ----------- shadow mapping ----------
+    // ----------- shadow mapping -----------
 
-    const unsigned int SHADOW_WIDTH = 2048, SHADOW_HEIGHT = 2048;
-    unsigned int depthMapFBO;
+    const GLuint SHADOW_WIDTH = 2048, SHADOW_HEIGHT = 2048;
+    GLuint depthMapFBO;
     glGenFramebuffers(1, &depthMapFBO);
 
     // create depth cubemap texture
-    unsigned int depthCubemap;
+    GLuint depthCubemap;
     glGenTextures(1, &depthCubemap);
     glBindTexture(GL_TEXTURE_CUBE_MAP, depthCubemap);
 
-    for (unsigned int i = 0; i < 6; ++i)
+    for (GLuint i = 0; i < 6; ++i)
         glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_DEPTH_COMPONENT, SHADOW_WIDTH, SHADOW_HEIGHT, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
 
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
-
 
     // attach depth texture as FBO's depth buffer
     glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
@@ -149,7 +145,8 @@ int main()
     glReadBuffer(GL_NONE);
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
-    // -------------------------------------
+    // --------------------------------------
+
 
 
     ObjectShader.use();
@@ -161,18 +158,22 @@ int main()
     NormalShader.setInt("normal_texture1", 1);
     NormalShader.setInt("depthMap", 2);
 
-    // --------- render loop start ---------
+
+
+
+    // ---------------- render loop start ----------------
     while (!glfwWindowShouldClose(window))
     {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         processInput(window);
 
-        // calculates how much time does it takes to render one frame 
+        // calculates how much time does it takes to render one frame (delta_frametime)
         curr_frametime = (float)glfwGetTime();
         delta_frametime = curr_frametime - prev_frametime;
         prev_frametime = curr_frametime;
 
-        // ---------------- rendering the depth map ----------------
+
+        // ---------------- rendering the shadow cubemap ----------------
 
         float near_plane = 1.0f;
         float far_plane = 40.0f;
@@ -189,20 +190,18 @@ int main()
         glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
         glClear(GL_DEPTH_BUFFER_BIT);
         ShadowShader.use();
-        for (unsigned int i = 0; i < 6; ++i)
+        for (GLuint i = 0; i < 6; ++i)
             ShadowShader.setMat4("shadowMatrices[" + std::to_string(i) + "]", shadowTransforms[i]);
         ShadowShader.setFloat("far_plane", far_plane);
         ShadowShader.setVec3("lightPos", light_pos);
 
-        // ========================================================= 
-
         RenderScene(ShadowShader, models);
 
-        // =========================================================
+        // --------------------------------------------------------------
 
+
+        // reset to default values
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
-        // reset viewport
         glViewport(0, 0, SCR_WIDTH, SCR_HEIGHT);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -268,6 +267,7 @@ int main()
 
         SkyboxShader.use();
         glDepthFunc(GL_LEQUAL);
+        // we use mat3 instead of mat4 to remove translation from matrix (only rotation is needed)
         view = glm::mat4(glm::mat3(camera.GetViewMatrix()));
         SkyboxShader.setMat4("view", view);
         SkyboxShader.setMat4("projection", projection);
@@ -284,7 +284,7 @@ int main()
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
-    // ---------- render loop end ----------
+    // ---------------- render loop end ----------------
 
     glfwTerminate();
     return 0;
@@ -312,17 +312,17 @@ void RenderScene( Shader & shader, Model models[])
 }
 
 
-// loading the cubemap for skybox
-unsigned int loadCubemap(vector<std::string> faces)
+// loading the cubemap (for skybox)
+GLuint loadCubemap(vector<std::string> faces)
 {
-    unsigned int textureID;
-    glGenTextures(1, &textureID);
-    glBindTexture(GL_TEXTURE_CUBE_MAP, textureID);
+    GLuint cubemapID;
+    glGenTextures(1, &cubemapID);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, cubemapID);
 
-    int width, height, nrChannels;
-    for (unsigned int i = 0; i < faces.size(); i++)
+    int width, height, components;
+    for (GLuint i = 0; i < faces.size(); i++)
     {
-        unsigned char* data = stbi_load(faces[i].c_str(), &width, &height, &nrChannels, 0);
+        unsigned char * data = stbi_load(faces[i].c_str(), &width, &height, &components, 0);
         if (data)
         {
             glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
@@ -330,7 +330,7 @@ unsigned int loadCubemap(vector<std::string> faces)
         }
         else
         {
-            std::cout << "Cubemap texture failed to load at path: " << faces[i] << std::endl;
+            std::cout << "Cubemap texture failed to load, path = " << faces[i] << std::endl;
             stbi_image_free(data);
         }
     }
@@ -340,7 +340,7 @@ unsigned int loadCubemap(vector<std::string> faces)
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
 
-    return textureID;
+    return cubemapID;
 }
 
 
@@ -406,8 +406,9 @@ void processInput(GLFWwindow* window)
         light_pos.x += delta_frametime * multiplier;
 }
 
-// ajust glViewport if the size of window is changing
+// update screen dimentions on window resize
 void framebuffer_size_callback(GLFWwindow* window, int width, int height)
 {
-    glViewport(0, 0, width, height);
+    SCR_WIDTH = width;
+    SCR_HEIGHT = height;
 }

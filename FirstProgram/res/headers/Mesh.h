@@ -23,7 +23,7 @@ struct Vertex {
 
 struct Texture {
 
-    unsigned int id;
+    GLuint id;
     string type;
     string path;
 };
@@ -31,7 +31,7 @@ struct Texture {
 class Mesh {
 public:
 
-    Mesh(vector<Vertex> vertices, vector<unsigned int> indices, vector<Texture> textures)
+    Mesh(vector<Vertex> vertices, vector<GLuint> indices, vector<Texture> textures)
     {
         this->vertices = vertices;
         this->indices = indices;
@@ -44,11 +44,11 @@ public:
     void Draw(Shader & shader)
     {
         // bind appropriate textures
-        unsigned int diffuseNr = 1;
-        unsigned int specularNr = 1;
-        unsigned int normalNr = 1;
-        unsigned int heightNr = 1;
-        unsigned int i = 0;
+        GLuint diffuseNr = 1;
+        GLuint specularNr = 1;
+        GLuint normalNr = 1;
+        GLuint heightNr = 1;
+        GLuint i = 0;
         for (i = 0; i < textures.size(); i++)
         {
             glActiveTexture(GL_TEXTURE0 + i); // active proper texture unit before binding
@@ -82,10 +82,10 @@ public:
 private:
 
     vector<Vertex>       vertices;
-    vector<unsigned int> indices;
+    vector<GLuint> indices;
     vector<Texture>      textures;
 
-    unsigned int VAO, VBO, EBO;
+    GLuint VAO, VBO, EBO;
 
     // initializes all the buffer objects/arrays
     void setupMesh()
@@ -104,7 +104,7 @@ private:
         glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(Vertex), &vertices[0], GL_STATIC_DRAW);
 
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(unsigned int), &indices[0], GL_STATIC_DRAW);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(GLuint), &indices[0], GL_STATIC_DRAW);
 
 
         glEnableVertexAttribArray(0);

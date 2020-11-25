@@ -10,7 +10,7 @@
 class Shader
 {
 public:
-    unsigned int ID;
+    GLuint ID;
     Shader(const char * vertexPath, const char * fragmentPath, const char* geometryPath = nullptr)
     {
         // 1. retrieve the vertex/fragment source code from filePath
@@ -59,7 +59,7 @@ public:
 
 
         // 2. compile shaders
-        unsigned int vertex, fragment;
+        GLuint vertex, fragment;
         // vertex shader
         vertex = glCreateShader(GL_VERTEX_SHADER);
         glShaderSource(vertex, 1, &vShaderCode, NULL);
@@ -71,7 +71,7 @@ public:
         glCompileShader(fragment);
         checkCompileErrors(fragment, "FRAGMENT");
         // if geometry shader is given, compile geometry shader
-        unsigned int geometry;
+        GLuint geometry;
         if (geometryPath != nullptr)
         {
             const char* gShaderCode = geometryCode.c_str();
