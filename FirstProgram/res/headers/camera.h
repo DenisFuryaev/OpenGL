@@ -14,13 +14,8 @@ class Camera
 {
 
 public:
-	glm::vec3 camera_pos;
-	glm::vec3 camera_dir;
-	glm::vec3 world_up;
-
-	float camera_speed = 0.05f;
-	float pitch = 0.0f, yaw = -90.0f;
-	float sensitivity = 0.1f;
+	glm::vec3 camera_pos, camera_dir, world_up;
+	float camera_speed = 0.05f, pitch = 0.0f, yaw = -90.0f, sensitivity = 0.1f;
 
 	Camera(glm::vec3 position, glm::vec3 direction, glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f))
 	{
@@ -64,6 +59,12 @@ public:
 	glm::mat4 GetViewMatrix()
 	{
 		return glm::lookAt(camera_pos, camera_pos + camera_dir, world_up);
+	}
+
+	glm::mat4 GetMirroredViewMatrix(glm::mat4 mirror_model)
+	{
+		glm::vec3 mirrored_camera_pos = glm::vec3(camera_pos.x, camera_pos.y, -30-camera_pos.z), mirrored_camera_dir = glm::vec3(camera_dir.x, camera_dir.y, -camera_dir.z);
+		return glm::lookAt(mirrored_camera_pos, mirrored_camera_pos + mirrored_camera_dir, world_up);
 	}
 
 	void UpdateVectors()

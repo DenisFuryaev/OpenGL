@@ -63,6 +63,9 @@
     <None Include="res\shaders\normal_mapping_fragment.glsl" />
     <None Include="res\shaders\normal_mapping_vertex.glsl" />
     <None Include="res\shaders\texture_vertex.glsl" />
+    <None Include="res\shaders\mirror_vertex.glsl" />
+    <None Include="res\shaders\mirror_fragment .glsl" />
+    <None Include="res\shaders\mirror_fragment.glsl" />
   </ItemGroup>
   <ItemGroup>
     <Library Include="res\lib\assimp-vc142-mtd.lib" />
