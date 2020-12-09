@@ -41,7 +41,7 @@ float ComputeShadow()
 vec2 ParallaxMap(vec2 texCoords, vec3 viewDir)
 {
     float height = 1 - texture(specular_texture1, texCoords).r;
-    vec2 p = viewDir.xy / viewDir.z * (height * 0.03f);
+    vec2 p = viewDir.xy * (height * 0.04f);
     return texCoords - p;
 }
 
@@ -53,6 +53,8 @@ void main()
 
     vec3 viewDir = normalize(TBN * view_pos - TBN * FragPos);
     vec2 newTexCoords = ParallaxMap(TexCoords, viewDir);
+    if (newTexCoords.x > 1.0 || newTexCoords.y > 1.0 || newTexCoords.x < 0.0 || newTexCoords.y < 0.0)
+        discard;
     vec3 ambient_color = texture(diffuse_texture1, newTexCoords).rgb;
     //vec3 ambient_color = texture(diffuse_texture1, TexCoords).rgb;
 

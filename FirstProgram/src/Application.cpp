@@ -294,6 +294,7 @@ int main()
 
 void Render(int depth_cubemap, int cubemap, float far_plane, Model models[], Shader shaders[])
 {
+    //------------------ teapot -----------------------
     model = glm::mat4(1.0f);
     model = glm::translate(model, glm::vec3(3.0f, 0.0f, -3.0f));
     shaders[0].use();
@@ -309,10 +310,10 @@ void Render(int depth_cubemap, int cubemap, float far_plane, Model models[], Sha
     glBindTexture(GL_TEXTURE_CUBE_MAP, depth_cubemap);
     models[0].Draw(shaders[0]);
 
-    //-----------------------------------------
+    //------------------ mirror -----------------------
 
     model = glm::mat4(1.0f);
-    model = glm::translate(model, glm::vec3(12.0f, 6.0f, 0.0f));
+    model = glm::translate(model, glm::vec3(14.0f, 6.0f, 0.0f));
     model = glm::rotate(model, glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
     model = glm::rotate(model, glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
     model = glm::scale(model, glm::vec3( 6.0f, 6.0f, 6.0f));
@@ -329,7 +330,7 @@ void Render(int depth_cubemap, int cubemap, float far_plane, Model models[], Sha
     glBindTexture(GL_TEXTURE_CUBE_MAP, depth_cubemap);
     models[5].Draw(shaders[4]);
 
-    //-----------------------------------------
+    //----------------- wooden plane -----------------
 
     shaders[0].use();
     model = glm::mat4(1.0f);
@@ -344,6 +345,7 @@ void Render(int depth_cubemap, int cubemap, float far_plane, Model models[], Sha
     glBindTexture(GL_TEXTURE_CUBE_MAP, depth_cubemap);
     models[1].Draw(shaders[0]);
 
+    //-------------------- cup ---------------------
 
     shaders[1].use();
     model = glm::mat4(1.0f);
