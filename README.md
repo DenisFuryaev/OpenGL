@@ -1,4 +1,5 @@
 # OpenGL
+Release
 This is my personal repo for learning OpenGL
 
 **How to run this program:**
