@@ -94,7 +94,8 @@ int main()
     Shader SkyboxShader("res/shaders/skybox_vertex.glsl", "res/shaders/skybox_fragment.glsl");
     Shader NormalShader("res/shaders/normal_mapping_vertex.glsl", "res/shaders/normal_mapping_fragment.glsl");
     Shader MirrorShader("res/shaders/mirror_vertex.glsl", "res/shaders/mirror_fragment.glsl");
-    Shader shaders[4] = {NormalShader, EnvironmentShader, LightShader, SkyboxShader};
+    Shader ParallaxShader("res/shaders/parallax_mapping_vertex.glsl", "res/shaders/parallax_mapping_fragment.glsl");
+    Shader shaders[5] = {NormalShader, EnvironmentShader, LightShader, SkyboxShader, ParallaxShader};
     //Shader TextureShader("res/shaders/texture_vertex.glsl", "res/shaders/texture_fragment.glsl");
 
     vector<std::string> faces
@@ -114,8 +115,9 @@ int main()
     Model Box_model("res/models/box.obj");
     Model Cup_model("res/models/Cup/cup.obj");
     Model Mirror_model("res/models/Mirror/mirror.obj");
+    Model Wall_model("res/models/BrickWall/wall.obj");
     //Model Pumpkin_model("res/models/pumpkin.obj");
-    Model models[5] = { Teapot_model , Plane_model , Cup_model, Sphere_model, Box_model };
+    Model models[6] = { Teapot_model , Plane_model , Cup_model, Sphere_model, Box_model, Wall_model };
 
     // -----------------------------------------------------------------
 
@@ -191,6 +193,11 @@ int main()
     MirrorShader.use();
     MirrorShader.setInt("mirrorTexture", 0);
 
+    ParallaxShader.use();
+    ParallaxShader.setInt("diffuse_texture1", 0);
+    ParallaxShader.setInt("normal_texture1", 1);
+    ParallaxShader.setInt("specular_texture1", 2);
+    ParallaxShader.setInt("depthMap", 3);
 
     // ---------------- render loop start ----------------
     while (!glfwWindowShouldClose(window))
@@ -301,6 +308,28 @@ void Render(int depth_cubemap, int cubemap, float far_plane, Model models[], Sha
     glActiveTexture(GL_TEXTURE1);
     glBindTexture(GL_TEXTURE_CUBE_MAP, depth_cubemap);
     models[0].Draw(shaders[0]);
+
+    //-----------------------------------------
+
+    model = glm::mat4(1.0f);
+    model = glm::translate(model, glm::vec3(12.0f, 6.0f, 0.0f));
+    model = glm::rotate(model, glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+    model = glm::rotate(model, glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+    model = glm::scale(model, glm::vec3( 6.0f, 6.0f, 6.0f));
+    shaders[4].use();
+    shaders[4].setVec3("object_color", 0.8f, 0.35f, 0.54f);
+    shaders[4].setVec3("light_color", 1.0f, 1.0f, 1.0f);
+    shaders[4].setVec3("light_pos", light_pos);
+    shaders[4].setVec3("view_pos", camera.camera_pos);
+    shaders[4].setMat4("model", model);
+    shaders[4].setMat4("view", view);
+    shaders[4].setMat4("projection", projection);
+    shaders[4].setFloat("far_plane", far_plane);
+    glActiveTexture(GL_TEXTURE3);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, depth_cubemap);
+    models[5].Draw(shaders[4]);
+
+    //-----------------------------------------
 
     shaders[0].use();
     model = glm::mat4(1.0f);

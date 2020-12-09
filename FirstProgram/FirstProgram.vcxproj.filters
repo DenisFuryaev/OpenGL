@@ -66,6 +66,7 @@
     <None Include="res\shaders\mirror_vertex.glsl" />
     <None Include="res\shaders\mirror_fragment .glsl" />
     <None Include="res\shaders\mirror_fragment.glsl" />
+    <None Include="res\shaders\parallax_mapping_vertex.glsl" />
   </ItemGroup>
   <ItemGroup>
     <Library Include="res\lib\assimp-vc142-mtd.lib" />
