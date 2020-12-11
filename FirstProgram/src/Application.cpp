@@ -115,7 +115,7 @@ int main()
     Model Box_model("res/models/box.obj");
     Model Cup_model("res/models/Cup/cup.obj");
     Model Mirror_model("res/models/Mirror/mirror.obj");
-    Model Wall_model("res/models/BrickWall/wall.obj");
+    Model Wall_model("res/models/StoneWall/wall.obj");
     //Model Pumpkin_model("res/models/pumpkin.obj");
     Model models[6] = { Teapot_model , Plane_model , Cup_model, Sphere_model, Box_model, Wall_model };
 

@@ -38,11 +38,33 @@ float ComputeShadow()
         return 1.0f;
 }
 
-vec2 ParallaxMap(vec2 texCoords, vec3 viewDir)
+vec2 ComputeParallaxOffset(vec2 texCoords, vec3 viewDir)
 {
     float height = 1 - texture(specular_texture1, texCoords).r;
-    vec2 p = viewDir.xy * (height * 0.04f);
-    return texCoords - p;
+    float layers = 20;
+    float delta_height = 1 / layers;
+    float curr_height = 1;
+    vec2 delta_texture = viewDir.xy * 0.1f / layers;
+
+    while (curr_height > height)
+    {
+        curr_height -= delta_height;
+        texCoords += delta_texture;
+        height = 1 - texture(specular_texture1, texCoords).r;
+    }
+
+    vec2 delta = delta_texture * 0.5f;
+    vec2 new_tex =  texCoords - delta;
+    for (int i = 0; i < 8; i++)
+    {
+        delta *= 0.5f;
+        if (texture(specular_texture1, new_tex).r > height)
+            new_tex += delta;
+        else
+            new_tex -= delta;
+    }
+
+    return new_tex;
 }
 
 void main() 
@@ -51,11 +73,11 @@ void main()
     
     float ambient_strength = 0.5f;
 
-    vec3 viewDir = normalize(TBN * view_pos - TBN * FragPos);
-    vec2 newTexCoords = ParallaxMap(TexCoords, viewDir);
-    if (newTexCoords.x > 1.0 || newTexCoords.y > 1.0 || newTexCoords.x < 0.0 || newTexCoords.y < 0.0)
-        discard;
+    vec3 viewDirTangentSpace = normalize(TBN * view_pos - TBN * FragPos);
+    vec2 newTexCoords = ComputeParallaxOffset(TexCoords, viewDirTangentSpace);
+
     vec3 ambient_color = texture(diffuse_texture1, newTexCoords).rgb;
+
     //vec3 ambient_color = texture(diffuse_texture1, TexCoords).rgb;
 
     vec3 normal = texture(normal_texture1, newTexCoords).rgb;
