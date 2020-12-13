@@ -6,7 +6,7 @@
 2. Extract
 3. Open .sln file with Visual Studio
 4. Select **x86** as a solution platform
-5. In the **Propeties** select **Debugging** and past this line **PATH=%PATH%;$(SolutionDir)FirstProgram\res\dll** in the **Envirnoment** field
+5. Copy **assimp-vc142-mtd.dll** dll file from FirstProgram\res\dll folder to Debug folder with the .exe file
 6. Run the program
 
 **Спецэффекты, реализованные в программе:**
