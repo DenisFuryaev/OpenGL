@@ -1,7 +1,7 @@
 # OpenGL
 Зачетная работа по компьютерной графике (на 13 баллов)
 
-**How to run this program:**
+**How to run this program in Visual Studio:**
 1. Download ZIP
 2. Extract
 3. Open .sln file with Visual Studio
@@ -17,4 +17,5 @@
   4. Normal mapping - 2 балла
   5. Попиксельный расчет освещенности по Фонгу - 2 балла
   6. Parallax relief mapping - 4 балла
+  7. Environment mapping
   
