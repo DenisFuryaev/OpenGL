@@ -58,7 +58,7 @@ vec2 ComputeParallaxOffset(vec2 texCoords, vec3 viewDir)
     for (int i = 0; i < 8; i++)
     {
         delta *= 0.5f;
-        if (texture(specular_texture1, new_tex).r > height)
+        if (1 - texture(specular_texture1, new_tex).r > height)
             new_tex += delta;
         else
             new_tex -= delta;

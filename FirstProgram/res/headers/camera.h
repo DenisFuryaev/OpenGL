@@ -61,7 +61,7 @@ public:
 		return glm::lookAt(camera_pos, camera_pos + camera_dir, world_up);
 	}
 
-	glm::mat4 GetMirroredViewMatrix(glm::mat4 mirror_model)
+	glm::mat4 GetMirroredViewMatrix()
 	{
 		glm::vec3 mirrored_camera_pos = glm::vec3(camera_pos.x, camera_pos.y, -30-camera_pos.z), mirrored_camera_dir = glm::vec3(camera_dir.x, camera_dir.y, -camera_dir.z);
 		return glm::lookAt(mirrored_camera_pos, mirrored_camera_pos + mirrored_camera_dir, world_up);

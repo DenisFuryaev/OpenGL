@@ -18,7 +18,7 @@ void framebuffer_size_callback(GLFWwindow * window, int width, int height);
 void mouse_callback(GLFWwindow * window, double xpos, double ypos);
 void mouse_button_callback(GLFWwindow * window, int button, int action, int mods);
 void processInput(GLFWwindow* window);
-void RenderScene( Shader & shader, Model models[]);
+void RenderShadow( Shader & shader, Model models[]);
 GLuint loadCubemap(vector<std::string> faces);
 
 // screen settings (aspect ratio = 16/9)
@@ -203,7 +203,6 @@ int main()
     while (!glfwWindowShouldClose(window))
     {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-        glDisable(GL_STENCIL_TEST);
 
         processInput(window);
 
@@ -235,10 +234,10 @@ int main()
         ShadowShader.setFloat("far_plane", far_plane);
         ShadowShader.setVec3("lightPos", light_pos);
 
-        RenderScene(ShadowShader, models);
+        RenderShadow(ShadowShader, models);
 
 
-        // ---------- drawing objects of the scene ------------
+        // ---------- rendering the reflection texture ------------
 
         glBindFramebuffer(GL_FRAMEBUFFER, reflectionFramebuffer);
         glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
@@ -247,25 +246,29 @@ int main()
 
         glViewport(0, 0, REFLECTION_WIDTH, REFLECTION_HEIGHT);
 
-        view = camera.GetMirroredViewMatrix(model);
+        view = camera.GetMirroredViewMatrix();
         Render(depthCubemap, cubemapTexture, far_plane, models, shaders);
 
         // reset to default values
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
         glViewport(0, 0, SCR_WIDTH, SCR_HEIGHT);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-        glDisable(GL_STENCIL_TEST);
+
 
         // ---------- drawing objects of the scene ------------
 
         view = camera.GetViewMatrix();
         Render(depthCubemap, cubemapTexture, far_plane, models, shaders);
 
+        //glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
+        //glStencilFunc(GL_ALWAYS, 1, 0xFF);
+        //glStencilMask(0xFF);
+
         MirrorShader.use();
         model = glm::mat4(1.0f);
         model = glm::translate(model, glm::vec3(0.0f, 5.0f, -15.0f));
         model = glm::rotate(model, glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
-        model = glm::scale(model, glm::vec3(16.0f, 6.0f, 6.0f));
+        model = glm::scale(model, glm::vec3(16.0f, 1.0f, 6.0f));
         view = camera.GetViewMatrix();
         MirrorShader.setMat4("model", model);
         MirrorShader.setMat4("view", view);
@@ -273,6 +276,20 @@ int main()
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, reflectionTexture);
         Mirror_model.Draw(MirrorShader);
+
+        //glStencilFunc(GL_NOTEQUAL, 1, 0xFF);
+        //glStencilMask(0x00);
+            
+        LightShader.use();
+        model = glm::mat4(1.0f);
+        model = glm::translate(model, glm::vec3(0.0f, 5.0f, -15.01f));
+        model = glm::rotate(model, glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+        model = glm::scale(model, glm::vec3(16.2f, 1.0f, 6.2f));
+        LightShader.setVec3("light_color", glm::vec3(0.4f, 0.6f, 0.9f));
+        LightShader.setMat4("model", model);
+        LightShader.setMat4("view", view);
+        LightShader.setMat4("projection", projection);
+        Mirror_model.Draw(LightShader);
 
         // ----------------------------------------------------------
 
@@ -295,6 +312,7 @@ int main()
 void Render(int depth_cubemap, int cubemap, float far_plane, Model models[], Shader shaders[])
 {
     //------------------ teapot -----------------------
+
     model = glm::mat4(1.0f);
     model = glm::translate(model, glm::vec3(3.0f, 0.0f, -3.0f));
     shaders[0].use();
@@ -309,26 +327,6 @@ void Render(int depth_cubemap, int cubemap, float far_plane, Model models[], Sha
     glActiveTexture(GL_TEXTURE1);
     glBindTexture(GL_TEXTURE_CUBE_MAP, depth_cubemap);
     models[0].Draw(shaders[0]);
-
-    //------------------ mirror -----------------------
-
-    model = glm::mat4(1.0f);
-    model = glm::translate(model, glm::vec3(14.0f, 6.0f, 0.0f));
-    model = glm::rotate(model, glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-    model = glm::rotate(model, glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-    model = glm::scale(model, glm::vec3( 6.0f, 6.0f, 6.0f));
-    shaders[4].use();
-    shaders[4].setVec3("object_color", 0.8f, 0.35f, 0.54f);
-    shaders[4].setVec3("light_color", 1.0f, 1.0f, 1.0f);
-    shaders[4].setVec3("light_pos", light_pos);
-    shaders[4].setVec3("view_pos", camera.camera_pos);
-    shaders[4].setMat4("model", model);
-    shaders[4].setMat4("view", view);
-    shaders[4].setMat4("projection", projection);
-    shaders[4].setFloat("far_plane", far_plane);
-    glActiveTexture(GL_TEXTURE3);
-    glBindTexture(GL_TEXTURE_CUBE_MAP, depth_cubemap);
-    models[5].Draw(shaders[4]);
 
     //----------------- wooden plane -----------------
 
@@ -350,6 +348,7 @@ void Render(int depth_cubemap, int cubemap, float far_plane, Model models[], Sha
     shaders[1].use();
     model = glm::mat4(1.0f);
     model = glm::translate(model, glm::vec3(-5.0f, 0.0f, 2.0f));
+    shaders[1].setBool("mode", 0); // mode for refraction
     shaders[1].setMat4("model", model);
     shaders[1].setMat4("view", view);
     shaders[1].setMat4("projection", projection);
@@ -367,8 +366,28 @@ void Render(int depth_cubemap, int cubemap, float far_plane, Model models[], Sha
     shaders[2].setMat4("model", model);
     shaders[2].setMat4("view", view);
     shaders[2].setMat4("projection", projection);
-
+    shaders[2].setVec3("light_color", glm::vec3(0.9f, 0.9f, 0.7f));
     models[3].Draw(shaders[2]);
+
+    //------------------ rock wall -----------------------
+
+    model = glm::mat4(1.0f);
+    model = glm::translate(model, glm::vec3(15.0f, 5.0f, 0.0f));
+    model = glm::rotate(model, glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+    model = glm::rotate(model, glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+    model = glm::scale(model, glm::vec3(6.0f, 6.0f, 6.0f));
+    shaders[4].use();
+    shaders[4].setVec3("object_color", 0.8f, 0.35f, 0.54f);
+    shaders[4].setVec3("light_color", 1.0f, 1.0f, 1.0f);
+    shaders[4].setVec3("light_pos", light_pos);
+    shaders[4].setVec3("view_pos", camera.camera_pos);
+    shaders[4].setMat4("model", model);
+    shaders[4].setMat4("view", view);
+    shaders[4].setMat4("projection", projection);
+    shaders[4].setFloat("far_plane", far_plane);
+    glActiveTexture(GL_TEXTURE3);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, depth_cubemap);
+    models[5].Draw(shaders[4]);
 
     // ------------------ drawing the skybox --------------------
 
@@ -385,7 +404,7 @@ void Render(int depth_cubemap, int cubemap, float far_plane, Model models[], Sha
 }
 
 
-void RenderScene( Shader & shader, Model models[])
+void RenderShadow( Shader & shader, Model models[])
 {
     glm::mat4 model = glm::mat4(1.0f);
 
