@@ -22,3 +22,4 @@
   6. Parallax relief mapping - 4 балла
   7. Environment mapping
   
+![OpenGL](https://user-images.githubusercontent.com/65111871/124356724-42a36200-dc20-11eb-8a5f-f4318122ded9.png)
